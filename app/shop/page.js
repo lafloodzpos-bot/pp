@@ -26,9 +26,11 @@ export default function StoreFront() {
   const [tgLink, setTgLink] = useState("");
   const [sigLink, setSigLink] = useState("");
   const touchStart = useRef(null);
+  const [announcements, setAnnouncements] = useState([]);
 
   useEffect(() => { fetch("/api/products").then(r=>r.json()).then(d=>{d.sort((a,b)=>{const da=a._internalDateAdded||"";const db=b._internalDateAdded||"";return db.localeCompare(da);});setProducts(d);setLoading(false);}).catch(()=>setLoading(false)); }, []);
   useEffect(() => { fetch("/api/links").then(r=>r.json()).then(d=>{setTgLink(d.telegramLink||"");setSigLink(d.signalLink||"");}).catch(()=>{}); }, []);
+  useEffect(() => { fetch("/api/announcements").then(r=>r.json()).then(d=>setAnnouncements(Array.isArray(d)?d:[])).catch(()=>{}); }, []);
   useEffect(() => { document.body.style.overflow=(sel||fsMedia)?"hidden":""; return()=>{document.body.style.overflow="";}; }, [sel,fsMedia]);
   useEffect(() => { setSlide(0); setVideoPlaying(false); }, [sel]);
 
@@ -136,6 +138,7 @@ export default function StoreFront() {
           </div>
         </div>}
         {page==="shop"&&!loading&&<>
+          
           <div style={{textAlign:"center",padding:"40px 20px 32px",background:"radial-gradient(ellipse at 50% 0%,var(--accent-glow) 0%,transparent 70%)",marginBottom:28,borderRadius:20}}>
             <h1 style={{fontFamily:"'Outfit'",fontSize:"clamp(26px,5vw,44px)",fontWeight:800,background:"linear-gradient(135deg,var(--text),var(--accent))",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:10}}>{SITE_TAGLINE}</h1>
             <p style={{color:"var(--muted)",fontSize:15,maxWidth:460,margin:"0 auto"}}>{SITE_DESCRIPTION}</p>
@@ -145,6 +148,7 @@ export default function StoreFront() {
             </div>}
             {BULK_DISCOUNTS.length>0&&<p style={{color:"var(--green)",fontSize:12,marginTop:12}}>{BULK_DISCOUNTS.map(d=>d.label).join(" | ")}</p>}
           </div>
+          {announcements.length>0&&<div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>{announcements.map(a=>(<div key={a.id} style={{background:"linear-gradient(135deg,rgba(108,92,231,.12),rgba(139,92,246,.06))",border:"1px solid var(--accent)",borderRadius:14,padding:"14px 18px"}}><div style={{display:"flex",alignItems:"center",gap:8,fontSize:14,fontWeight:700,color:"var(--accent)"}}><span>*</span><span>{a.title}</span></div><div style={{fontSize:14,color:"var(--text)",whiteSpace:"pre-wrap",lineHeight:1.5,marginTop:4}}>{a.body}</div></div>))}</div>}
           <div style={{display:"flex",flexWrap:"wrap",gap:10,marginBottom:24,alignItems:"center",justifyContent:"space-between"}}>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{CATEGORIES.map(cat=>(<button key={cat} onClick={()=>setCategory(cat)} style={{padding:"8px 16px",borderRadius:10,border:"1px solid "+(category===cat?"var(--accent)":"var(--border)"),background:category===cat?"var(--accent)":"var(--surface)",color:category===cat?"#fff":"var(--muted)",cursor:"pointer",fontSize:13,fontWeight:600}}>{cat}</button>))}</div>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search..." style={{...is,width:200}}/>
@@ -152,7 +156,7 @@ export default function StoreFront() {
           {filtered.length===0&&<div style={{textAlign:"center",padding:60,color:"var(--muted)"}}><p>No products listed yet.</p></div>}
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}}>
             {filtered.map((product)=>{const inS=product.inStock!==false;return(<div key={product.id} style={{background:"var(--card)",borderRadius:16,border:"1px solid var(--border)",overflow:"hidden",cursor:"pointer",opacity:inS?1:0.55}} onClick={()=>setSel(product)}>
-              <div style={{position:"relative"}}>{product.image?<img src={product.image} alt={product.name} style={{width:"100%",aspectRatio:"3/4",objectFit:"cover",display:"block"}}/>:product.video?<video src={product.video} muted playsInline preload="metadata" style={{width:"100%",aspectRatio:"3/4",objectFit:"cover",display:"block"}}/>:<div style={{width:"100%",aspectRatio:"3/4",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--surface)",color:"var(--dim)",fontSize:13}}>{product.name}</div>}
+              <div style={{position:"relative"}}>{product.image?<img src={product.image} alt={product.name} style={{width:"100%",aspectRatio:"3/4",objectFit:"cover",display:"block"}}/>:product.video?<video src={product.video+"#t=0.1"} muted playsInline preload="metadata" style={{width:"100%",aspectRatio:"3/4",objectFit:"cover",display:"block"}}/>:<div style={{width:"100%",aspectRatio:"3/4",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--surface)",color:"var(--dim)",fontSize:13}}>{product.name}</div>}
                 {product.video&&<div style={{position:"absolute",bottom:8,left:8,background:"rgba(0,0,0,.6)",color:"#fff",padding:"3px 8px",borderRadius:5,fontSize:10,display:"flex",alignItems:"center",gap:3}}><svg width="10" height="10" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>Video</div>}
                 {!inS&&<div style={{position:"absolute",top:10,left:10,background:"var(--red)",color:"#fff",padding:"3px 10px",borderRadius:6,fontSize:10,fontWeight:700}}>SOLD OUT</div>}
                 {product.badge&&inS&&<span style={{position:"absolute",top:10,right:10,background:product.badge==="HOT"?"var(--red)":product.badge==="NEW"?"var(--accent)":product.badge==="SALE"?"var(--green)":"var(--gold)",color:"#fff",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:6}}>{product.badge}</span>}
